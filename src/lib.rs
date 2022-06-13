@@ -1,6 +1,7 @@
 use std::{mem::swap, path::Path};
 
 use image::{ImageBuffer, Luma};
+use rayon::prelude::*;
 
 
 
@@ -162,17 +163,19 @@ impl Simulation {
     }
 
     fn advance(&mut self) {
-        for i in 0..self.current_grid.len() {
-            let cell = self.current_grid.cell(i);
+        self.next_grid.cells.par_iter_mut().enumerate().for_each(|(index, next_cell)| {
+            let cell = self.current_grid.cell(index);
             let (lap_a, lap_b) = laplacian(cell, &self.current_grid, &self.params);
             let abb = cell.a * cell.b * cell.b;
 
             let a = cell.a + (self.params.diff_a * lap_a - abb + self.params.f * (1.0 - cell.a));
             let b = cell.b + (self.params.diff_b * lap_b + abb - (self.params.k + self.params.f) * cell.b );
 
-            self.next_grid.cell_mut(i).a = a;
-            self.next_grid.cell_mut(i).b = b;
-        }
+            next_cell.a = a;
+            next_cell.b = b;
+            // self.next_grid.cell_mut(i).a = a;
+            // self.next_grid.cell_mut(i).b = b;
+        });
 
         // swap next and current
         swap(&mut self.current_grid, &mut self.next_grid);
@@ -215,14 +218,11 @@ mod tests {
 
     #[test]
     fn should_produce_image() {
-        let params = crate::SimulationParameters { f: 0.0545, k: 0.062, adj: 0.2, diag: 0.05, diff_a: 1.0, diff_b: 0.5, iter: 2000 };
-        let mut simulation = Simulation::new(100, 100, params);
+        let params = crate::SimulationParameters { f: 0.0545, k: 0.062, adj: 0.2, diag: 0.05, diff_a: 1.0, diff_b: 0.5, iter: 1000 };
+        let mut simulation = Simulation::new(200, 200, params);
 
-        simulation.seed_dot((25, 25));
-        // simulation.seed_dot((75, 25));
-        // simulation.seed_dot((75, 75));
-        // simulation.seed_dot((25, 75));
-        // simulation.seed_dot((50, 50));
+        simulation.seed_dot((1, 1));
+        simulation.seed_dot((100, 1));
 
 
         simulation.simulate();
