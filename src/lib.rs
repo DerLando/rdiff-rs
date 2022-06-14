@@ -4,10 +4,6 @@ use image::{ImageBuffer, Luma};
 use rayon::prelude::*;
 
 
-
-trait Empty {}
-trait Initialized {}
-
 #[derive(Debug)]
 struct Cell {
     pub a: f64,
@@ -105,14 +101,20 @@ impl Grid {
     }
 }
 
-struct SimulationParameters {
-    f: f64,
-    k: f64,
-    adj: f64,
-    diag: f64,
-    diff_a: f64,
-    diff_b: f64,
-    iter: usize
+pub struct SimulationParameters {
+    pub f: f64,
+    pub k: f64,
+    pub adj: f64,
+    pub diag: f64,
+    pub diff_a: f64,
+    pub diff_b: f64,
+    pub iter: usize
+}
+
+impl SimulationParameters {
+    pub const fn coral_growth() -> Self {
+        Self {f: 0.0545, k: 0.062, adj: 0.2, diag: 0.05, diff_a: 1.0, diff_b: 0.5, iter: 1}
+    }
 }
 
 fn laplacian(cell: &Cell, grid: &Grid, params: &SimulationParameters) -> (f64, f64) {
@@ -132,7 +134,7 @@ fn laplacian(cell: &Cell, grid: &Grid, params: &SimulationParameters) -> (f64, f
         -cell.b + ((u.b + d.b + l.b + r.b) * params.adj) + ((lu.b + ru.b + ld.b + rd.b) * params.diag)
     )
 }
-struct Simulation {
+pub struct Simulation {
     current_grid: Grid,
     next_grid: Grid,
     iter: usize,
